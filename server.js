@@ -18,8 +18,22 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 
 // CORS configuration
+// Support comma-separated origins in CORS_ORIGIN env var, and '*' to allow all
+const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const allowedOrigins = rawOrigins.split(',').map(o => o.trim());
+console.log('CORS allowed origins:', allowedOrigins);
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like server-to-server or curl)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes('*') || allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+
+        return callback(new Error('CORS policy: This origin is not allowed - ' + origin));
+    },
     credentials: true
 }));
 
