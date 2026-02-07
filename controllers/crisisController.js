@@ -24,6 +24,20 @@ const createCrisisRequest = async (req, res) => {
         }
         
         const extracted = aiResult.data;
+
+        // Coerce numeric fields to integers to match DB column types
+        const quantityInt = (extracted.quantity !== undefined && extracted.quantity !== null)
+            ? (Number.isFinite(Number(extracted.quantity)) ? parseInt(Number(extracted.quantity)) : null)
+            : null;
+
+        let urgencyScoreInt = null;
+        if (extracted.urgency_score !== undefined && extracted.urgency_score !== null) {
+            const num = Number(extracted.urgency_score);
+            if (Number.isFinite(num)) {
+                // Round to nearest integer and clamp between 0 and 10
+                urgencyScoreInt = Math.min(10, Math.max(0, Math.round(num)));
+            }
+        }
         
         // Insert crisis request into database
         const insertQuery = `
@@ -43,12 +57,12 @@ const createCrisisRequest = async (req, res) => {
             original_message,
             message_source || 'Manual',
             extracted.need_type,
-            extracted.quantity,
+            quantityInt,
             extracted.quantity_unit,
             extracted.location_text,
             extracted.location_state,
             extracted.location_city,
-            extracted.urgency_score,
+            urgencyScoreInt,
             extracted.urgency_level,
             extracted.urgency_reasoning,
             aiResult.success,
