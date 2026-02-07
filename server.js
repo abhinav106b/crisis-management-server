@@ -19,7 +19,8 @@ app.use(helmet());
 
 // CORS configuration
 // Support comma-separated origins in CORS_ORIGIN env var, and '*' to allow all
-const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000';
+// Default to '*' while testing so Vercel frontends can reach the API (change back for production)
+const rawOrigins = process.env.CORS_ORIGIN || '*';
 const allowedOrigins = rawOrigins.split(',').map(o => o.trim());
 console.log('CORS allowed origins:', allowedOrigins);
 
